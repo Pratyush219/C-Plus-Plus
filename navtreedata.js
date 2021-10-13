@@ -141,8 +141,8 @@ var NAVTREEINDEX =
 "d9/d49/kohonen__som__trace_8cpp.html#a1440a7779ac56f47a3f355ce4a8c7da0",
 "da/de7/decimal__to__hexadecimal_8cpp.html",
 "dc/d5a/rat__maze_8cpp.html#ab99107bfb4c6934cd4691868c66c0aa3",
-"de/d00/classgraph_1_1is__graph__bipartite_1_1_graph.html#a9b0c6400693a5cfff971f768dd5ca5ca",
-"functions_func_e.html"
+"de/d00/classgraph_1_1is__graph__bipartite_1_1_graph.html",
+"functions_b.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
