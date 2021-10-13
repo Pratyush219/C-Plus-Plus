@@ -13,6 +13,10 @@
 #include <unordered_set> // for using unordered_set
 #include <queue> // for priority_queue
 #include <iomanip> // for formatting the output
+#include <cstdlib> // random number generation
+#include <algorithm> // for sorting
+#include <cassert> //for assert
+#include <ctime>
 
 using std::cin;
 using std::cout;
@@ -24,23 +28,46 @@ using std::vector;
 using std::tuple;
 using std::endl;
 using std::left;
+using std::rand;
+using std::srand;
+/** 
+ * @brief Comparator function for sorting of vector
+ * @tparam S Data type of Process ID
+ * @tparam T Data type of Arrival time
+ * @tparam E Data type of Burst time 
+ * @param t1 first tuple
+ * @param t2 second tuple
+ * @returns true if t1 and t2 are in CORRECT ORDER
+ * @returns false if t1 and t2 are in INCORRECT ORDER
+*/ 
+template<typename S, typename T, typename E>
+bool sortcol(tuple<S, T, E>& t1, tuple<S, T, E>& t2){
+    if(get<1>(t1) < get<1>(t2)){
+        return true;
+    }
+    else if(get<1>(t1) == get<1>(t2) && get<0>(t1) < get<0>(t2)){
+        return true;
+    }
+    return false;
+}
 
 /** 
  * @class Compare
  * @brief Comparator class for priority queue
- * @tparam S: Data type of Process ID
- * @tparam T: Data type of Arrival time
- * @tparam E: Data type of Burst time 
+ * @tparam S Data type of Process ID
+ * @tparam T Data type of Arrival time
+ * @tparam E Data type of Burst time 
 */ 
 template<typename S, typename T, typename E>
 class Compare{
     public:
     /**
-     * @param t1: first tuple
-     * @param t2: second tuple 
+     * @param t1 first tuple
+     * @param t2 second tuple 
      * @brief A comparator function that checks whether to swap the two tuples or not.
-     * @link Refer https://www.geeksforgeeks.org/comparator-class-in-c-with-examples/ for detailed description of comparator
-     * @returns true if the tuples should be swapped, false othewise
+     * @link Refer to https://www.geeksforgeeks.org/comparator-class-in-c-with-examples/ for detailed description of comparator
+     * @returns true if the tuples SHOULD be swapped
+     * @returns false if the tuples SHOULDN'T be swapped
     */
     bool operator () (tuple<S, T, E, double, double, double>& t1, tuple<S, T, E, double, double, double>& t2){
         // Compare arrival times
@@ -58,9 +85,9 @@ class Compare{
 /**
  * @class FCFS
  * @brief Class which implements the FCFS scheduling algorithm
- * @tparam S: Data type of Process ID
- * @tparam T: Data type of Arrival time
- * @tparam E: Data type of Burst time 
+ * @tparam S Data type of Process ID
+ * @tparam T Data type of Arrival time
+ * @tparam E Data type of Burst time 
 */ 
 template<typename S, typename T, typename E>
 class FCFS{
@@ -84,9 +111,9 @@ class FCFS{
     public:
     /**
      * @brief adds the process to the ready queue if it isn't already there
-     * @param ID: Process ID
-     * @param arrival: Arrival time of the process
-     * @param burst: Burst time of the process
+     * @param ID Process ID
+     * @param arrival Arrival time of the process
+     * @param burst Burst time of the process
      * @returns void
      * 
     */
@@ -111,7 +138,7 @@ class FCFS{
      * 
      * @returns void
     */ 
-    void scheduleForFcfs(){
+    vector<tuple<S, T, E, double, double, double>> scheduleForFcfs(){
         // Variable to keep track of time elapsed so far
         double timeElapsed = 0;
 
@@ -138,7 +165,7 @@ class FCFS{
             result.push_back(cur);
             schedule.pop();
         }
-        printResult();
+        return result;
     }
 
     /**
@@ -169,25 +196,80 @@ class FCFS{
 
 };
 
+template<typename S, typename T, typename E>
+vector<tuple<S, T, E, double, double, double>> get_final_status(vector<tuple<uint32_t, uint32_t, uint32_t>>& input){
+    sort(input.begin(), input.end(), sortcol<S, T, E>);
+    vector<tuple<S, T, E, double, double, double>> result(input.size());
+    double timeElapsed = 0;
+    for(size_t i{}; i < input.size(); i++){
+        T arrival = get<1>(input[i]);
+        E burst = get<2>(input[i]);
+
+        if(arrival > timeElapsed){
+            timeElapsed += arrival - timeElapsed;
+        }
+        timeElapsed += burst;
+        double completion = timeElapsed;
+        double turnaround = completion - arrival;
+        double waiting = turnaround - burst;
+
+        get<0>(result[i]) = get<0>(input[i]);
+        get<1>(result[i]) = arrival;
+        get<2>(result[i]) = burst;
+        get<3>(result[i]) = completion;
+        get<4>(result[i]) = turnaround;
+        get<5>(result[i]) = waiting;
+
+    }
+    return result;
+}
+
+void test(){
+    for(int i{}; i < 1000; i++){
+        srand(time(0));
+        int n = 1 + rand()%1000;
+        FCFS<uint32_t ,uint32_t, uint32_t> readyQueue;
+        vector<tuple<uint32_t, uint32_t, uint32_t>> input(n);
+
+        for(int i{}; i < n; i++){
+            get<0>(input[i]) = i;
+            srand(time(0));
+            get<1>(input[i]) = 1 + rand()%10000;
+            srand(time(0));
+            get<2>(input[i]) = 1 + rand()%10000;
+        }
+
+        for(uint32_t i{}; i < n; i++){
+            readyQueue.addProcess(get<0>(input[i]), get<1>(input[i]), get<2>(input[i]));
+        }
+        vector<tuple<uint32_t ,uint32_t, uint32_t, double, double, double>> res = get_final_status<uint32_t ,uint32_t, uint32_t>(input);
+        assert(res == readyQueue.scheduleForFcfs());
+        // readyQueue.printResult();
+    }
+    cout << "All tests passed" << endl;
+
+}
+
 /**
  * @brief Entry point of the program
  * @returns 0 on exit
 */
 int main(){
-    FCFS<uint32_t ,uint32_t, uint32_t> readyQueue;
+    // FCFS<uint32_t ,uint32_t, uint32_t> readyQueue;
 
-    //Sample test case
-    int n = 3;
-    vector<tuple<uint32_t, uint32_t, uint32_t>> input = {
-        make_tuple(1, 0, 30),
-        make_tuple(2, 0, 5),
-        make_tuple(3, 0, 5)
-    };
+    // //Sample test case
+    // int n = 3;
+    // vector<tuple<uint32_t, uint32_t, uint32_t>> input = {
+    //     make_tuple(1, 0, 30),
+    //     make_tuple(2, 0, 5),
+    //     make_tuple(3, 0, 5)
+    // };
 
-    for(uint32_t i{}; i < n; i++){
-        readyQueue.addProcess(get<0>(input[i]), get<1>(input[i]), get<2>(input[i]));
-    }
+    // for(uint32_t i{}; i < n; i++){
+    //     readyQueue.addProcess(get<0>(input[i]), get<1>(input[i]), get<2>(input[i]));
+    // }
 
-    readyQueue.scheduleForFcfs();
+    // readyQueue.scheduleForFcfs();
+    test();
     return 0;
 }
